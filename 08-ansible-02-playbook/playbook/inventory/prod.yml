@@ -1,0 +1,17 @@
+---
+clickhouse:
+  hosts:
+    clickhouse-01:
+      ansible_host: 51.250.77.160
+      ansible_python_interpreter: /usr/local/bin/python3
+      ansible_user: sergei
+      # ansible_connection: docker
+      # ansible_python_interpreter: /opt/rh/rh-python38/root/usr/bin/python3.8
+    # clickhouse-01:
+    #   # ansible_host: <IP_here>
+    #   ansible_connection: docker
+    #   ansible_python_interpreter: /opt/rh/rh-python38/root/usr/bin/python3.8
+    # centos7:
+    #   # ansible_host: <IP_here>
+    #   ansible_connection: docker
+    #   ansible_python_interpreter: python3.10
