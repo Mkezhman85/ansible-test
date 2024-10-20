@@ -1,0 +1,93 @@
+---
+- name: Install Clickhouse
+  hosts: clickhouse
+
+  handlers:
+    - name: Start clickhouse service
+      become: true
+      ansible.builtin.service:
+        name: clickhouse-server
+        state: restarted
+
+  tasks:
+
+    - block:
+
+        # - name: "Get current python3 version"
+        #   shell: /usr/local/bin/python3 --version |sed 's/^Python //'
+        #   register: python_version_current
+        #   changed_when: 'python_version_current.stdout != python_version_default'
+        #   check_mode: no
+        #   tags: test
+
+        - name: Example from an Ansible Playbook
+          ansible.builtin.ping:
+          tags: test
+
+        # - name: Install epel-release
+        #   ansible.builtin.dnf:
+        #     name: 
+        #       - epel-release
+        #       - gcc 
+        #       - openssl-devel 
+        #       - bzip2-devel
+        #   become: yes
+        #   tags: test
+
+        - name: Return motd to registered var
+          ansible.builtin.command:
+            argv:
+              - ls
+              - -la
+          register: etc_rel
+          tags: test
+          
+          become: yes
+        # - name: Install ssl
+        #   ansible.builtin.pip:
+        #     name: ssl
+        #     executable: pip3
+        #   tags: test  
+
+        - name: Debug registered var
+          debug: var=etc_rel.stdout_lines.
+
+        # Скачивание пакета
+        - name: Get clickhouse distrib
+          ansible.builtin.get_url:
+            url: "https://packages.clickhouse.com/rpm/stable/{{ item }}-{{ clickhouse_version }}.aarch64.rpm"
+            dest: "./{{ item }}-{{ clickhouse_version }}.rpm"
+            validate_certs: false
+          with_items: "{{ clickhouse_packages }}"
+          
+
+      rescue:
+        - name: Get clickhouse distrib
+          ansible.builtin.get_url:
+            url: "https://packages.clickhouse.com/rpm/stable/clickhouse-common-static-{{ clickhouse_version }}.x86_64.rpm"
+            dest: "./clickhouse-common-static-{{ clickhouse_version }}.rpm"
+            validate_certs: false
+
+    # Установка скачанного пакета
+    - name: Install clickhouse packages
+      # become: true
+      become_method: su
+      ansible.builtin.yum:
+        name:
+          - clickhouse-common-static-{{ clickhouse_version }}.rpm
+          - clickhouse-client-{{ clickhouse_version }}.rpm
+          - clickhouse-server-{{ clickhouse_version }}.rpm
+        # disable_gpg_check: true
+        use_backend: dnf
+      notify: Start clickhouse service
+
+
+    - name: Flush handlers
+      ansible.builtin.meta: flush_handlers
+
+    # Создание базы данных
+    - name: Create database
+      ansible.builtin.command: "clickhouse-client -q 'create database logs;'"
+      register: create_db
+      failed_when: create_db.rc != 0 and create_db.rc !=82
+      changed_when: create_db.rc == 0
