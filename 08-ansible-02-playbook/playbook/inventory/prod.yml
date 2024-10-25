@@ -2,9 +2,7 @@
 clickhouse:
   hosts:
     clickhouse-04:
-      ansible_host: 89.169.136.15
-      # ansible_host: 89.169.138.56
+      ansible_host: 51.250.86.153
       ansible_user: sergei
       ansible_connection: ssh
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-      # ansible_python_interpreter: /usr/bin/python3
