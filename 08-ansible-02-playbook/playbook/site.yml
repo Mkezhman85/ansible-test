@@ -27,9 +27,9 @@
     - name: Flush handlers
       meta: flush_handlers
 
-    - name: timeout 45 sec
+    - name: Pause 20 sec
       ansible.builtin.pause:
-        seconds: 45
+        seconds: 20
 
     - name: Create database
       become: true
@@ -38,3 +38,41 @@
       failed_when: create_db.rc != 0 and create_db.rc !=82
       changed_when: create_db.rc == 0
 
+- name: Install vector
+  hosts: vector
+  handlers:
+    - name: Start vector service
+      become: true
+      ansible.builtin.service:
+        name: vector
+        state: restarted
+  tasks:
+    - name: Get vector distrib
+      ansible.builtin.get_url:
+        url: "https://packages.timber.io/vector/{{ vector_version }}/vector_{{ vector_version }}-1_amd64.deb"
+        dest: "./vector-{{ vector_version }}.deb"
+        mode: "0777"
+      notify: Start vector service
+    - name: Install vector packages
+      become: true
+      become_method: sudo
+      ansible.builtin.apt:
+        update_cache: yes
+        deb: "./{{ item.1 }}"
+      with_indexed_items:
+      - vector-{{ vector_version }}.deb
+    - name: Flush handlers to restart vector
+      meta: flush_handlers
+
+    - name: Configure Vector | ensure what directory exists
+      become: true
+      ansible.builtin.file:
+        path: "{{ vector_config_dir }}"
+        state: directory
+        mode: "0777"
+    - name: Configure Vector | Template config
+      become: true
+      ansible.builtin.template:
+        src: "template/vector_conf.j2"
+        dest: "{{ vector_config_dir }}/vector.yml"
+        mode: "0777"
