@@ -19,14 +19,6 @@
             mode: '0755'
           become: true
           with_items: "{{ clickhouse_packages }}"
-    # - block:
-    #     - name: Get clickhouse distrib
-    #       ansible.builtin.get_url:
-    #         url: "https://packages.clickhouse.com/deb/pool/main/c/{{ item }}/{{ item }}_{{ clickhouse_version }}_amd64.deb"
-    #         dest: "./{{ item }}-{{ clickhouse_version }}.deb"
-    #         mode: '0755'
-    #       become: true
-    #       with_items: "{{ clickhouse_packages }}"
     - name: Install a .deb packages
       become: true
       ansible.builtin.apt:
