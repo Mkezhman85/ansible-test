@@ -1,22 +1,32 @@
 ---
 - name: Install Clickhouse
-
   hosts: clickhouse
+  become: true
+  gather_facts: true
   handlers:
     - name: Start clickhouse service
       become: true
       ansible.builtin.service:
         name: clickhouse-server
         state: restarted
-
   tasks:
-    - block:
+    - name: Prepare for Clickhouse install
+      block:
         - name: Get clickhouse distrib
           ansible.builtin.get_url:
             url: "https://packages.clickhouse.com/deb/pool/main/c/{{ item }}/{{ item }}_{{ clickhouse_version }}_amd64.deb"
             dest: "./{{ item }}-{{ clickhouse_version }}.deb"
+            mode: '0755'
+          become: true
           with_items: "{{ clickhouse_packages }}"
-       
+    # - block:
+    #     - name: Get clickhouse distrib
+    #       ansible.builtin.get_url:
+    #         url: "https://packages.clickhouse.com/deb/pool/main/c/{{ item }}/{{ item }}_{{ clickhouse_version }}_amd64.deb"
+    #         dest: "./{{ item }}-{{ clickhouse_version }}.deb"
+    #         mode: '0755'
+    #       become: true
+    #       with_items: "{{ clickhouse_packages }}"
     - name: Install a .deb packages
       become: true
       ansible.builtin.apt:
@@ -25,7 +35,7 @@
       notify: Start clickhouse service
 
     - name: Flush handlers
-      meta: flush_handlers
+      ansible.builtin.meta: flush_handlers
 
     - name: Pause 20 sec
       ansible.builtin.pause:
@@ -51,18 +61,18 @@
       ansible.builtin.get_url:
         url: "https://packages.timber.io/vector/{{ vector_version }}/vector_{{ vector_version }}-1_amd64.deb"
         dest: "./vector-{{ vector_version }}.deb"
-        mode: "0777"
+        mode: "0755"
       notify: Start vector service
     - name: Install vector packages
       become: true
-      become_method: sudo
+      # become_method: sudo
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
         deb: "./{{ item.1 }}"
       with_indexed_items:
-      - vector-{{ vector_version }}.deb
+        - vector-{{ vector_version }}.deb
     - name: Flush handlers to restart vector
-      meta: flush_handlers
+      ansible.builtin.meta: flush_handlers
 
     - name: Configure Vector | ensure what directory exists
       become: true
